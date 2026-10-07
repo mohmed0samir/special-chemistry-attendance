@@ -9,7 +9,80 @@
     }
   ],
   "doctors": [],
-  "students": [],
+  "students": [
+    {
+      "id": "stu_muxw57kt_5050",
+      "studentId": "202301",
+      "name": "أحمد علي",
+      "groupNumber": "1",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_5751",
+      "studentId": "202302",
+      "name": "سارة محمود",
+      "groupNumber": "2",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_5373",
+      "studentId": "202303",
+      "name": "عمر حسن",
+      "groupNumber": "3",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_4345",
+      "studentId": "202304",
+      "name": "مي خالد",
+      "groupNumber": "4",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_1421",
+      "studentId": "202305",
+      "name": "كريم إبراهيم",
+      "groupNumber": "5",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_9474",
+      "studentId": "202306",
+      "name": "ياسمين طارق",
+      "groupNumber": "6",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_1530",
+      "studentId": "202307",
+      "name": "محمد سامح",
+      "groupNumber": "7",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    },
+    {
+      "id": "stu_muxw57kt_3392",
+      "studentId": "202308",
+      "name": "نوران شريف",
+      "groupNumber": "8",
+      "status": "active",
+      "createdAt": "2026-10-07T09:14:14.813Z",
+      "updatedAt": "2026-10-07T09:14:14.813Z"
+    }
+  ],
   "courses": [
     {
       "id": "c_203",
@@ -35,11 +108,73 @@
       "id": "g_3",
       "groupNumber": "3",
       "name": "مجموعة 3"
+    },
+    {
+      "id": "g_4",
+      "groupNumber": "4",
+      "name": "مجموعة 4"
+    },
+    {
+      "id": "g_5",
+      "groupNumber": "5",
+      "name": "مجموعة 5"
+    },
+    {
+      "id": "g_6",
+      "groupNumber": "6",
+      "name": "مجموعة 6"
+    },
+    {
+      "id": "g_7",
+      "groupNumber": "7",
+      "name": "مجموعة 7"
+    },
+    {
+      "id": "g_8",
+      "groupNumber": "8",
+      "name": "مجموعة 8"
     }
   ],
   "schedules": [],
-  "attendanceSessions": [],
-  "attendanceRecords": [],
+  "attendanceSessions": [
+    {
+      "id": "sess_muxw5fnr",
+      "courseId": "203",
+      "courseName": "Special Chemistry 203",
+      "courseCode": "203",
+      "doctorId": "doc",
+      "doctorName": "هيئة التدريس",
+      "groupNumber": "ALL",
+      "date": "2026-10-07",
+      "startTime": "٠٩:١٤ ص",
+      "endTime": "",
+      "status": "OPEN",
+      "randomToken": "P3GHCF",
+      "tokenUpdatedAt": "2026-10-07T09:14:25.287Z",
+      "expiresAt": "2026-10-07T09:29:25.287Z",
+      "location": "مدرج الكيمياء الرئيسي",
+      "latitude": 30.0444,
+      "longitude": 31.2357,
+      "radius": 80,
+      "createdAt": "2026-10-07T09:14:25.287Z"
+    }
+  ],
+  "attendanceRecords": [
+    {
+      "attendanceId": "sess_muxw5fnr_202308",
+      "studentId": "202308",
+      "studentName": "نوران شريف",
+      "groupNumber": "8",
+      "doctorId": "doc",
+      "courseId": "Special Chemistry 203",
+      "sessionId": "sess_muxw5fnr",
+      "date": "2026-10-07",
+      "checkInTime": "٠٩:١٤:٢٩ ص",
+      "status": "PRESENT",
+      "qrVerified": true,
+      "locationVerified": true
+    }
+  ],
   "settings": {
     "collegeName": "كلية العلوم - شعبة كيمياء خاصة Special Chemistry",
     "academicYear": "2026/2027",

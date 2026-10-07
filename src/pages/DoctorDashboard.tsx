@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   GraduationCap, Clock, Users, Play, PowerOff, QrCode,
-  MapPin, Calendar, CheckCircle2, XCircle, Download, RefreshCw, KeyRound
+  Calendar, Check, Download, KeyRound, Layers
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AttendanceSession, AttendanceRecord, Student } from '../types';
@@ -16,14 +16,15 @@ export const DoctorDashboard: React.FC<{ onNavigate: (path: string) => void }> =
   const [activeSession, setActiveSession] = useState<AttendanceSession | null>(null);
   const [groupStudents, setGroupStudents] = useState<Student[]>([]);
   const [activeRecords, setActiveRecords] = useState<AttendanceRecord[]>([]);
+  const [availableGroups, setAvailableGroups] = useState<{ value: string; label: string; count: number }[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modals
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [selectedGroupToStart, setSelectedGroupToStart] = useState<string>('1');
+  const [selectedGroupToStart, setSelectedGroupToStart] = useState<string>('ALL');
 
-  // Load doctor's data
+  // Load doctor's data and auto-detect all groups from students/database
   const fetchDoctorData = async () => {
     if (!doctorProfile) return;
     setLoading(true);
@@ -33,16 +34,63 @@ export const DoctorDashboard: React.FC<{ onNavigate: (path: string) => void }> =
       const mySessions = data.attendanceSessions.filter((s) => s.doctorId === doctorProfile.id);
       setSessions(mySessions);
 
+      // Auto-detect and group student count
+      const groupCounts = new Map<string, number>();
+      data.students.forEach((st) => {
+        const g = (st.groupNumber || '').trim().replace(/^مجموعة\s*/, '') || '1';
+        groupCounts.set(g, (groupCounts.get(g) || 0) + 1);
+      });
+
+      // Aggregate all groups from both db.groups and registered students
+      const uniqueGroupKeys = Array.from(
+        new Set([
+          ...data.groups.map((g) => (g.groupNumber || '').trim().replace(/^مجموعة\s*/, '')),
+          ...Array.from(groupCounts.keys()),
+        ])
+      )
+        .filter(Boolean)
+        .sort((a, b) => {
+          const na = parseInt(a, 10);
+          const nb = parseInt(b, 10);
+          if (!isNaN(na) && !isNaN(nb)) return na - nb;
+          return a.localeCompare(b);
+        });
+
+      // Build options: All Groups first, then each individual group
+      const groupsList: { value: string; label: string; count: number }[] = [
+        {
+          value: 'ALL',
+          label: `الدفعة بالكامل (جميع المجموعات - ${data.students.length} طالب)`,
+          count: data.students.length,
+        },
+        ...uniqueGroupKeys.map((gn) => ({
+          value: gn,
+          label: `مجموعة ${gn} (${groupCounts.get(gn) || 0} طالب)`,
+          count: groupCounts.get(gn) || 0,
+        })),
+      ];
+
+      setAvailableGroups(groupsList);
+
       const openOne = mySessions.find((s) => s.status === 'OPEN');
       setActiveSession(openOne || null);
 
       if (openOne) {
         const cleanGrp = openOne.groupNumber.replace(/^مجموعة\s*/, '').trim();
-        const students = data.students.filter((st) => st.groupNumber === cleanGrp);
+        const isAll =
+          cleanGrp === 'ALL' ||
+          cleanGrp === 'الكل' ||
+          cleanGrp === 'all' ||
+          cleanGrp === 'جميع المجموعات';
+
+        const students = isAll
+          ? data.students
+          : data.students.filter((st) => (st.groupNumber || '').trim().replace(/^مجموعة\s*/, '') === cleanGrp);
+
         setGroupStudents(students);
 
         const recsRes = await api.getSessionRecords(openOne.id);
-        setActiveRecords(recsRes.records);
+        setActiveRecords(recsRes.records || []);
       }
     } catch (err) {
       console.error('Error fetching doctor data:', err);
@@ -102,7 +150,8 @@ export const DoctorDashboard: React.FC<{ onNavigate: (path: string) => void }> =
       };
     });
 
-    const filename = `كشف_حضور_وغياب_${doctorProfile?.courseCode}_مجموعة_${activeSession.groupNumber}_${activeSession.date}`;
+    const grpName = activeSession.groupNumber === 'ALL' ? 'الدفعة_بالكامل' : `مجموعة_${activeSession.groupNumber}`;
+    const filename = `كشف_حضور_${doctorProfile?.courseCode}_${grpName}_${activeSession.date}`;
     if (format === 'xlsx') {
       exportToExcel(exportRows, filename, 'الحضور والغياب');
     } else {
@@ -110,261 +159,259 @@ export const DoctorDashboard: React.FC<{ onNavigate: (path: string) => void }> =
     }
   };
 
-  const doctorGroups = doctorProfile?.groupNumbers
-    ? doctorProfile.groupNumbers.split(',').map((g) => g.trim())
-    : ['1', '2', '3'];
-
-  // Absent students calculation
   const attendeeIds = new Set(activeRecords.map((r) => r.studentId));
-  const absentStudents = groupStudents.filter((s) => !attendeeIds.has(s.id) && !attendeeIds.has(s.studentId));
+  const attendeeRecordsMap = new Map(activeRecords.map((r) => [r.studentId, r]));
 
   return (
-    <div className="space-y-6 pb-16">
-      {/* Top Welcome Card */}
-      <div className="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-6 pb-16 max-w-6xl mx-auto">
+      {/* Editorial Profile Header */}
+      <div className="rounded-2xl bg-[#0F1626] border border-white/[0.08] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-xl">
-            <GraduationCap className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+            <GraduationCap className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-400" />
-              <span className="text-xs font-bold text-teal-400 tracking-wider">لوحة المحاضر</span>
+            <div className="flex items-center gap-2 text-xs text-teal-400 mb-0.5">
+              <span>هيئة التدريس</span>
+              <span aria-hidden="true">·</span>
+              <span>{doctorProfile?.courseName} ({doctorProfile?.courseCode})</span>
+              <span aria-hidden="true">·</span>
+              <span>{doctorProfile?.location || 'مدرج الكيمياء الرئيسي'}</span>
             </div>
-            <h1 className="text-2xl font-black text-white">{doctorProfile?.name || 'عضو هيئة التدريس'}</h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              مقرر: {doctorProfile?.courseName} ({doctorProfile?.courseCode}) • {doctorProfile?.location}
-            </p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">د. {doctorProfile?.name || 'عضو هيئة التدريس'}</h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsPasswordModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
-          >
-            <KeyRound className="w-4 h-4 text-teal-400" />
-            <span>تغيير كلمة المرور</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsPasswordModalOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-white/[0.08] transition-colors"
+        >
+          <KeyRound className="w-3.5 h-3.5 text-teal-400" />
+          <span>تغيير كلمة المرور</span>
+        </button>
       </div>
 
-      {/* Main Grid: Active Session Controller & Schedule */}
+      {/* Main Grid: Active Session Control & Live Attendance Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Active Session Controller (7 cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-5">
+        {/* Left: Active Session Controller (5 cols) */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#0F1626] border border-white/[0.08] space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Clock className="w-5 h-5 text-teal-400" />
-                <span>جلسة تسجيل الحضور الحالية</span>
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <Clock className="w-4 h-4 text-teal-400" />
+                <span>جلسة تسجيل الحضور</span>
               </h2>
               {activeSession && (
-                <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center gap-1.5 border border-emerald-500/20 animate-pulse">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>جلسة مفتوحة</span>
+                <span className="text-xs text-teal-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+                  <span>نشطة الآن</span>
                 </span>
               )}
             </div>
 
             {activeSession ? (
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between">
+                <div className="p-4 rounded-xl bg-[#090D16] border border-white/[0.08] flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-bold text-white">{activeSession.courseName}</h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      مجموعة {activeSession.groupNumber} • بدأت: {activeSession.startTime}
-                    </p>
+                    <h3 className="text-sm font-semibold text-white">{activeSession.courseName}</h3>
+                    <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                      <span className="text-teal-300 font-semibold">
+                        {activeSession.groupNumber === 'ALL'
+                          ? 'الدفعة بالكامل (جميع المجموعات)'
+                          : `مجموعة ${activeSession.groupNumber}`}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-mono tabular-nums">بدأت: {activeSession.startTime}</span>
+                    </div>
                   </div>
                   <div className="text-left">
-                    <span className="text-xs text-slate-400 block">الحضور الآن:</span>
-                    <span className="text-xl font-black text-emerald-400">
+                    <span className="text-xs text-slate-500 block">الحضور المسجل</span>
+                    <span className="text-xl font-bold font-mono tabular-nums text-teal-400">
                       {activeRecords.length} / {groupStudents.length || '—'}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setIsQRModalOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-lg shadow-teal-600/20 transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition-colors"
                   >
                     <QrCode className="w-4 h-4" />
-                    <span>عرض رمز الـ QR على الشاشة للطلاب</span>
+                    <span>عرض رمز الـ QR على الشاشة</span>
                   </button>
                   <button
                     onClick={() => handleCloseSession(activeSession.id)}
-                    className="flex items-center gap-1.5 px-4 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 font-semibold text-xs border border-rose-500/30 transition-colors"
+                    title="إنهاء الجلسة وإغلاق الباب"
                   >
                     <PowerOff className="w-4 h-4" />
-                    <span>إنهاء الحضور 🔒</span>
+                    <span>إنهاء</span>
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  ابدأ تسجيل الحضور للمحاضرة الآن. سيتم توليد رمز QR ديناميكي يتغير دورياً لحماية الحضور، مع تفعيل التحقق من موقع القاعة.
+                  اختر المجموعة المراد تسجيل حضورها (مجموعة واحدة محددة أو الدفعة بالكامل)، ثم ابدأ الجلسة لعرض كود الحضور.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <div className="flex-1">
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1">
-                      اختر المجموعة / السكشن:
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-teal-400" />
+                      <span>المجموعة المستهدفة:</span>
                     </label>
                     <select
                       value={selectedGroupToStart}
                       onChange={(e) => setSelectedGroupToStart(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-teal-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#090D16] border border-white/[0.08] text-slate-100 text-xs focus:outline-none focus:border-teal-500 cursor-pointer"
                     >
-                      {doctorGroups.map((g) => (
-                        <option key={g} value={g}>
-                          مجموعة {g}
-                        </option>
-                      ))}
+                      {availableGroups.length === 0 ? (
+                        <>
+                          <option value="ALL">الدفعة بالكامل (جميع المجموعات)</option>
+                          <option value="1">مجموعة 1</option>
+                          <option value="2">مجموعة 2</option>
+                        </>
+                      ) : (
+                        availableGroups.map((g) => (
+                          <option key={g.value} value={g.value}>
+                            {g.label}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
 
                   <button
                     onClick={handleStartSession}
-                    className="flex items-center justify-center gap-2 sm:self-end px-6 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-lg shadow-teal-600/20 transition-all h-[42px]"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition-colors"
                   >
                     <Play className="w-4 h-4" />
-                    <span>بدء تسجيل الحضور</span>
+                    <span>بدء تسجيل حضور جديد</span>
                   </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Attendees vs Absentees Live View */}
-          {activeSession && (
-            <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>الحاضرون ({activeRecords.length})</span>
-                  </div>
-                  <span>•</span>
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-400">
-                    <XCircle className="w-4 h-4" />
-                    <span>الغائبون ({absentStudents.length})</span>
-                  </div>
-                </div>
+          {/* Quick Schedule card */}
+          <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08] space-y-3">
+            <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-teal-400" />
+              <span>جدول المحاضرات الأسبوعي</span>
+            </h3>
+            <div className="text-xs text-slate-400 space-y-1.5 font-mono">
+              <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                <span className="text-slate-300">الأيام المعتمدة:</span>
+                <span className="text-slate-100">{doctorProfile?.days || 'الأحد، الثلاثاء'}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                <span className="text-slate-300">التوقيت:</span>
+                <span className="text-slate-100">{doctorProfile?.startTime || '09:00'} — {doctorProfile?.endTime || '11:00'}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-300">المكان:</span>
+                <span className="text-slate-100">{doctorProfile?.location || 'مدرج الكيمياء الرئيسي'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* Right: Live Roster and Attendees (7 cols) */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#0F1626] border border-white/[0.08] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div>
+                <h3 className="text-sm font-bold text-white">كشف الحضور اللحظي للمحاضرة</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {activeSession
+                    ? `${
+                        activeSession.groupNumber === 'ALL'
+                          ? 'الدفعة بالكامل'
+                          : `المجموعة: ${activeSession.groupNumber}`
+                      } · إجمالي المسجلين: ${groupStudents.length}`
+                    : 'في انتظار بدء الجلسة'}
+                </p>
+              </div>
+
+              {activeSession && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleExportDoctorReport('xlsx')}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs flex items-center gap-1"
-                    title="تصدير كشف كامل"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 text-xs font-medium border border-teal-500/20 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Excel</span>
                   </button>
+                  <button
+                    onClick={() => handleExportDoctorReport('csv')}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs font-medium border border-white/[0.08] transition-colors"
+                  >
+                    <span>CSV</span>
+                  </button>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                {/* Present List */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] text-slate-400 font-bold block mb-1">كشف الحضور:</span>
-                  {activeRecords.map((rec) => (
-                    <div
-                      key={rec.attendanceId}
-                      className="p-2 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs"
-                    >
-                      <span className="font-semibold text-slate-200">{rec.studentName}</span>
-                      <span className="font-mono text-[10px] text-emerald-400">{rec.checkInTime}</span>
-                    </div>
-                  ))}
-                  {activeRecords.length === 0 && (
-                    <p className="text-[11px] text-slate-500 text-center py-4">في انتظار تسجيل الطلاب...</p>
-                  )}
-                </div>
-
-                {/* Absent List */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] text-slate-400 font-bold block mb-1">الطلاب الذين لم يحضروا بعد:</span>
-                  {absentStudents.map((st) => (
-                    <div
-                      key={st.id}
-                      className="p-2 rounded-xl bg-slate-950/40 border border-slate-800/80 flex items-center justify-between text-xs opacity-75"
-                    >
-                      <span className="text-slate-400">{st.name}</span>
-                      <span className="text-[10px] text-rose-400">غائب</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Lecture Schedule and Past Sessions (5 cols) */}
-        <div className="lg:col-span-5 space-y-4">
-          {/* Lecture Card */}
-          <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-teal-400" />
-              <span>جدول المحاضرات الخاص بي</span>
-            </h3>
-
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">المقرر:</span>
-                <span className="font-bold text-slate-200">{doctorProfile?.courseName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">كود المقرر:</span>
-                <span className="font-mono font-bold text-teal-400">{doctorProfile?.courseCode}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">المجموعات:</span>
-                <span className="text-slate-300">{doctorProfile?.groupNumbers}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">الأيام والمواعيد:</span>
-                <span className="text-slate-300">{doctorProfile?.days} ({doctorProfile?.startTime} - {doctorProfile?.endTime})</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">مكان المحاضرة:</span>
-                <span className="text-slate-300">{doctorProfile?.location}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Past Sessions List */}
-          <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-3">
-            <h3 className="text-sm font-bold text-white">سجل الجلسات السابقة</h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {sessions.filter(s => s.status === 'CLOSED').length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-6">لا توجد جلسات مغلقة سابقة.</p>
-              ) : (
-                sessions
-                  .filter((s) => s.status === 'CLOSED')
-                  .map((s) => (
-                    <div
-                      key={s.id}
-                      className="p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 flex items-center justify-between text-xs"
-                    >
-                      <div>
-                        <p className="font-bold text-slate-300">مجموعة {s.groupNumber}</p>
-                        <p className="text-[10px] text-slate-500">{s.date} • {s.startTime}</p>
-                      </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">
-                        مغلقة 🔒
-                      </span>
-                    </div>
-                  ))
               )}
             </div>
+
+            {activeSession ? (
+              <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                {groupStudents.length === 0 ? (
+                  <p className="text-xs text-slate-500 text-center py-8">
+                    لا يوجد طلاب مسجلين في هذه المجموعة حالياً. قم بإضافتهم أو استيراد كشف Excel عبر لوحة المشرف.
+                  </p>
+                ) : (
+                  groupStudents.map((st, i) => {
+                    const isPresent = attendeeIds.has(st.id) || attendeeIds.has(st.studentId);
+                    const rec = attendeeRecordsMap.get(st.id) || attendeeRecordsMap.get(st.studentId);
+
+                    return (
+                      <div
+                        key={st.id}
+                        className={`p-3 rounded-xl border flex items-center justify-between transition-colors ${
+                          isPresent
+                            ? 'bg-teal-950/20 border-teal-500/30 text-white'
+                            : 'bg-[#090D16] border-white/[0.04] text-slate-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono tabular-nums text-slate-500 w-5">
+                            {i + 1}.
+                          </span>
+                          <div>
+                            <span className="text-xs font-medium block text-slate-100">{st.name}</span>
+                            <span className="text-[11px] font-mono text-slate-500">
+                              {st.studentId} · مجموعة {st.groupNumber}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 text-xs">
+                          {isPresent ? (
+                            <div className="flex items-center gap-1.5 text-teal-400 font-medium">
+                              <Check className="w-3.5 h-3.5" />
+                              <span>حاضر ({rec?.checkInTime})</span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 text-xs font-medium">لم يسجل بعد</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              <div className="py-16 text-center text-slate-500 space-y-2">
+                <Users className="w-8 h-8 mx-auto text-slate-600" />
+                <p className="text-xs">اضغط على "بدء تسجيل حضور جديد" لعرض الكشف ومتابعة تسجيل الطلاب فوراً</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* MODALS */}
-      {/* 1. Live QR Modal */}
+      {/* QR MODAL */}
       {activeSession && (
         <QRModal
           session={activeSession}
@@ -377,7 +424,7 @@ export const DoctorDashboard: React.FC<{ onNavigate: (path: string) => void }> =
         />
       )}
 
-      {/* 2. Change Password Modal */}
+      {/* PASSWORD MODAL */}
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}

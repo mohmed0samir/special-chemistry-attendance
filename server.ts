@@ -173,6 +173,32 @@ app.post('/api/auth/student-login', (req, res) => {
 
 app.get('/api/admin/data', (req, res) => {
   const db = getDb();
+
+  // Auto-sync all unique groups found in students or existing groups
+  const studentGroups = db.students.map((s) => s.groupNumber.trim()).filter(Boolean);
+  const existingGroupNumbers = new Set(db.groups.map((g) => g.groupNumber.trim()));
+
+  studentGroups.forEach((gn) => {
+    if (!existingGroupNumbers.has(gn)) {
+      db.groups.push({
+        id: `g_${gn}`,
+        groupNumber: gn,
+        name: `مجموعة ${gn}`,
+      });
+      existingGroupNumbers.add(gn);
+    }
+  });
+
+  // Sort groups numerically if possible
+  db.groups.sort((a, b) => {
+    const na = parseInt(a.groupNumber, 10);
+    const nb = parseInt(b.groupNumber, 10);
+    if (!isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.groupNumber.localeCompare(b.groupNumber);
+  });
+
+  saveDb();
+
   res.json({
     students: db.students,
     doctors: db.doctors.map((d) => ({
@@ -470,9 +496,12 @@ app.get('/api/doctor/sessions/:id/records', (req, res) => {
 app.get('/api/student/sessions', (req, res) => {
   const group = (req.query.group as string || '').trim().replace(/^مجموعة\s*/, '');
   const db = getDb();
-  const openSessions = db.attendanceSessions.filter(
-    (s) => s.status === 'OPEN' && (!group || s.groupNumber === group)
-  );
+  const openSessions = db.attendanceSessions.filter((s) => {
+    if (s.status !== 'OPEN') return false;
+    const sessGroup = (s.groupNumber || '').trim().replace(/^مجموعة\s*/, '');
+    const isAll = sessGroup === 'ALL' || sessGroup === 'الكل' || sessGroup === 'all' || sessGroup === 'جميع المجموعات';
+    return isAll || !group || sessGroup === group;
+  });
   return res.json({ sessions: openSessions });
 });
 
@@ -484,9 +513,9 @@ app.get('/api/student/records/:studentId', (req, res) => {
   return res.json({ records });
 });
 
-// Student Check-In (Atomic Duplicate Prevention + GPS Verification)
+// Student Check-In (Atomic Duplicate Prevention - Direct QR/Code Verification)
 app.post('/api/student/check-in', (req, res) => {
-  const { sessionId, studentId, studentName, groupNumber, latitude, longitude } = req.body;
+  const { sessionId, studentId, studentName, groupNumber } = req.body;
   const db = getDb();
 
   const session = db.attendanceSessions.find((s) => s.id === (sessionId || '').trim());
@@ -498,9 +527,15 @@ app.post('/api/student/check-in', (req, res) => {
     return res.status(400).json({ error: 'تم إغلاق جلسة الحضور 🔒' });
   }
 
-  const sessionGroup = session.groupNumber.replace(/^مجموعة\s*/, '').trim();
+  const sessionGroup = (session.groupNumber || '').replace(/^مجموعة\s*/, '').trim();
   const studentGroup = (groupNumber || '').replace(/^مجموعة\s*/, '').trim();
-  if (sessionGroup !== studentGroup) {
+  const isAllGroups =
+    sessionGroup === 'ALL' ||
+    sessionGroup === 'الكل' ||
+    sessionGroup === 'all' ||
+    sessionGroup === 'جميع المجموعات';
+
+  if (!isAllGroups && sessionGroup !== studentGroup) {
     return res.status(400).json({
       error: `هذه الجلسة مخصصة لمجموعة ${session.groupNumber}. مجموعتك هي ${groupNumber}.`,
     });
@@ -510,26 +545,7 @@ app.post('/api/student/check-in', (req, res) => {
   const compositeId = `${session.id}_${studentId}`;
   const alreadyCheckedIn = db.attendanceRecords.some((r) => r.attendanceId === compositeId);
   if (alreadyCheckedIn) {
-    return res.status(400).json({ error: 'تم تسجيل حضورك مسبقًا.' });
-  }
-
-  // Location Verification if configured
-  let locationVerified = true;
-  let distMeters: number | undefined;
-
-  if (session.latitude && session.longitude) {
-    if (latitude !== undefined && longitude !== undefined) {
-      const allowedRadius = session.radius || 80;
-      distMeters = calculateDistanceMeters(latitude, longitude, session.latitude, session.longitude);
-      if (distMeters > allowedRadius) {
-        return res.status(400).json({
-          error: `أنت خارج نطاق المحاضرة (${distMeters} متر عن القاعة، المسموح ${allowedRadius} متر).`,
-        });
-      }
-      locationVerified = true;
-    } else {
-      locationVerified = false;
-    }
+    return res.status(400).json({ error: 'تم تسجيل حضورك مسبقًا في هذه الجلسة.' });
   }
 
   const newRecord: AttendanceRecordItem = {
@@ -544,10 +560,7 @@ app.post('/api/student/check-in', (req, res) => {
     checkInTime: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     status: 'PRESENT',
     qrVerified: true,
-    locationVerified,
-    latitude,
-    longitude,
-    distanceMeters: distMeters,
+    locationVerified: true,
   };
 
   db.attendanceRecords.unshift(newRecord);

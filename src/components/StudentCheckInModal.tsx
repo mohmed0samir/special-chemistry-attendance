@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { X, QrCode, MapPin, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, QrCode, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getCurrentLocation } from '../lib/geo';
 import { api } from '../lib/api';
 
 interface StudentCheckInModalProps {
@@ -50,26 +49,12 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
         return;
       }
 
-      // 2. Fetch Geolocation coordinates if available
-      let userLat: number | undefined;
-      let userLng: number | undefined;
-      try {
-        const coords = await getCurrentLocation();
-        userLat = coords.latitude;
-        userLng = coords.longitude;
-      } catch (geoErr: any) {
-        // Location optional or warning
-        console.warn('Geolocation probe:', geoErr.message);
-      }
-
-      // 3. Submit check-in to server API
+      // 2. Submit check-in directly without GPS location hurdles
       const res = await api.studentCheckIn({
         sessionId: targetSessionId,
         studentId: studentProfile.id,
         studentName: studentProfile.name,
         groupNumber: studentProfile.groupNumber,
-        latitude: userLat,
-        longitude: userLng,
       });
 
       setIsSuccess(true);
@@ -77,7 +62,7 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 1400);
+      }, 1000);
     } catch (err: any) {
       console.error('Check-in error:', err);
       setIsSuccess(false);
@@ -89,10 +74,10 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+      <div className="bg-[#0F1626] border border-white/[0.08] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+            <div className="w-9 h-9 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
@@ -110,14 +95,14 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
 
         <form onSubmit={handleCheckIn} className="p-6 space-y-4">
           {/* Student Info Card */}
-          <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-[#090D16] border border-white/[0.08] flex items-center justify-between">
             <div>
               <span className="text-xs text-slate-400 block">الطالب:</span>
-              <span className="text-sm font-bold text-white">{studentProfile?.name}</span>
+              <span className="text-sm font-semibold text-white">{studentProfile?.name}</span>
             </div>
             <div className="text-left">
               <span className="text-xs text-slate-400 block">المجموعة:</span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
+              <span className="text-xs font-mono text-teal-300">
                 مجموعة {studentProfile?.groupNumber}
               </span>
             </div>
@@ -126,16 +111,16 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
           {/* Status Message */}
           {statusMessage && (
             <div
-              className={`p-3.5 rounded-xl text-xs flex items-center gap-2 ${
+              className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
                 isSuccess
-                  ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold'
-                  : 'bg-rose-500/15 border border-rose-500/30 text-rose-300 font-semibold'
+                  ? 'bg-teal-500/15 border border-teal-500/30 text-teal-300 font-semibold'
+                  : 'bg-rose-500/15 border border-rose-500/30 text-rose-300 font-medium'
               }`}
             >
               {isSuccess ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <Check className="w-4 h-4 text-teal-400 shrink-0" />
               ) : (
-                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
               )}
               <span>{statusMessage}</span>
             </div>
@@ -143,7 +128,7 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
 
           {/* Session Code or QR Payload Input */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium text-slate-300 mb-1.5">
               كود جلسة المحاضرة أو رمز الـ QR
             </label>
             <div className="relative">
@@ -151,14 +136,14 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
                 type="text"
                 value={sessionInput}
                 onChange={(e) => setSessionInput(e.target.value)}
-                placeholder="ألصق كود الجلسة أو بيانات الـ QR من شاشة الدكتور"
-                className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-mono"
+                placeholder="ألصق كود الجلسة أو امسح كود الـ QR من شاشة الدكتور"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#090D16] border border-white/[0.08] text-slate-100 text-sm focus:outline-none focus:border-teal-500 transition-colors font-mono"
                 required
+                autoFocus
               />
             </div>
-            <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-blue-400" />
-              <span>يتم فحص الموقع الجغرافي للتأكد من تواجدك بالقاعة</span>
+            <p className="text-[11px] text-slate-500 mt-1.5">
+              يتم تسجيل الحضور مباشرة وبشكل فوري بمجرد إدخال الكود
             </p>
           </div>
 
@@ -166,23 +151,23 @@ export const StudentCheckInModal: React.FC<StudentCheckInModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-colors"
+              className="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-medium transition-colors"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={loading || isSuccess}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-lg shadow-blue-600/20"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-xs font-semibold transition-colors"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>جاري التحقق والمطابقة...</span>
+                  <span>جاري تسجيل الحضور...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <Check className="w-4 h-4" />
                   <span>تأكيد تسجيل الحضور</span>
                 </>
               )}

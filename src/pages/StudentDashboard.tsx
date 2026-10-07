@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  User, CheckCircle2, Clock, QrCode, MapPin, ShieldCheck
-} from 'lucide-react';
+import { User, Check, QrCode } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AttendanceRecord, AttendanceSession } from '../types';
 import { api } from '../lib/api';
@@ -41,24 +39,22 @@ export const StudentDashboard: React.FC<{ onNavigate: (path: string) => void }> 
   const attendanceRatio = Math.round((presentCount / totalLecturesCount) * 100);
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 pb-16 max-w-5xl mx-auto">
       {/* Student Welcome Header */}
-      <div className="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-[#0F1626] border border-white/[0.08] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xl">
-            <User className="w-7 h-7" />
+          <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center font-bold">
+            <User className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
-              <span className="text-xs font-bold text-blue-400 tracking-wider">
-                شعبة Special Chemistry • مجموعة {studentProfile?.groupNumber}
-              </span>
+            <div className="flex items-center gap-2 text-xs text-teal-400 mb-0.5">
+              <span>شعبة Special Chemistry</span>
+              <span aria-hidden="true">·</span>
+              <span>مجموعة {studentProfile?.groupNumber}</span>
+              <span aria-hidden="true">·</span>
+              <span className="font-mono">{studentProfile?.studentId}</span>
             </div>
-            <h1 className="text-2xl font-black text-white">{studentProfile?.name}</h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              رقم الطالب: {studentProfile?.studentId} • حالة القيد: طالب نشط
-            </p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">{studentProfile?.name}</h1>
           </div>
         </div>
 
@@ -67,7 +63,7 @@ export const StudentDashboard: React.FC<{ onNavigate: (path: string) => void }> 
             setSelectedSessionId(openSessions[0]?.id || '');
             setIsCheckInModalOpen(true);
           }}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-xl shadow-blue-600/20 transition-all hover:scale-102"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition-colors"
         >
           <QrCode className="w-4 h-4" />
           <span>تسجيل الحضور في المحاضرة</span>
@@ -76,14 +72,14 @@ export const StudentDashboard: React.FC<{ onNavigate: (path: string) => void }> 
 
       {/* Active Live Sessions Banner */}
       {openSessions.length > 0 && (
-        <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/60 to-teal-950/40 border border-emerald-500/30 space-y-3">
+        <div className="p-5 rounded-2xl bg-teal-950/20 border border-teal-500/30 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-emerald-400">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+            <div className="flex items-center gap-2 text-teal-300">
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
               <h3 className="font-bold text-sm">هناك جلسة حضور نشطة الآن لمجموعتك!</h3>
             </div>
-            <span className="text-xs font-mono text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">
-              مفتوحة حالياً
+            <span className="text-xs font-mono text-teal-400">
+              مفتوحة حالياً للتسجيل
             </span>
           </div>
 
@@ -92,24 +88,21 @@ export const StudentDashboard: React.FC<{ onNavigate: (path: string) => void }> 
             return (
               <div
                 key={sess.id}
-                className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                className="p-4 rounded-xl bg-[#090D16] border border-white/[0.08] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
               >
                 <div>
-                  <h4 className="text-sm font-bold text-white">{sess.courseName}</h4>
-                  <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
-                    <span>الدكتور: {sess.doctorName || 'هيئة التدريس'}</span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                      {sess.location || 'القاعة الرئيسية'}
-                    </span>
+                  <h4 className="text-sm font-semibold text-white">{sess.courseName}</h4>
+                  <div className="flex items-center gap-3 text-xs text-slate-400 mt-1 font-mono">
+                    <span>المحاضر: {sess.doctorName || 'هيئة التدريس'}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>المكان: {sess.location || 'مدرج الكيمياء'}</span>
                   </div>
                 </div>
 
                 {alreadyCheckedIn ? (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>تم تسجيل حضورك بالفعل ✅</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-500/10 text-teal-300 text-xs font-medium">
+                    <Check className="w-4 h-4 text-teal-400" />
+                    <span>تم تسجيل حضورك مسبقاً ✅</span>
                   </div>
                 ) : (
                   <button
@@ -117,10 +110,10 @@ export const StudentDashboard: React.FC<{ onNavigate: (path: string) => void }> 
                       setSelectedSessionId(sess.id);
                       setIsCheckInModalOpen(true);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md shadow-emerald-600/20"
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-colors"
                   >
                     <QrCode className="w-3.5 h-3.5" />
-                    <span>سجّل حضورك الآن</span>
+                    <span>تسجيل الحضور الآن</span>
                   </button>
                 )}
               </div>
@@ -129,102 +122,69 @@ export const StudentDashboard: React.FC<{ onNavigate: (path: string) => void }> 
         </div>
       )}
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-xs text-slate-400 block mb-1">المحاضرات المسجلة</span>
-          <p className="text-2xl font-black text-white">{records.length}</p>
+      {/* Attendance Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
+          <span className="text-xs text-slate-400 block mb-1">نسبة الحضور التراكمية</span>
+          <p className="text-2xl font-bold font-mono tabular-nums text-teal-400">{attendanceRatio}%</p>
+          <span className="text-[11px] text-slate-500 mt-1 block">محسوبة من إجمالي المحاضرات</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30">
-          <span className="text-xs text-emerald-300 block mb-1">مرات الحضور</span>
-          <p className="text-2xl font-black text-emerald-400">{presentCount}</p>
+        <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
+          <span className="text-xs text-slate-400 block mb-1">المحاضرات المحضورة</span>
+          <p className="text-2xl font-bold font-mono tabular-nums text-white">{presentCount}</p>
+          <span className="text-[11px] text-slate-500 mt-1 block">جلسات تم اعتمادها بنجاح</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-xs text-slate-400 block mb-1">مرات الغياب</span>
-          <p className="text-2xl font-black text-slate-400">
-            {records.filter((r) => r.status === 'ABSENT').length}
-          </p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-blue-950/20 border border-blue-500/30">
-          <span className="text-xs text-blue-300 block mb-1">نسبة الحضور</span>
-          <p className="text-2xl font-black text-blue-400">
-            {records.length > 0 ? `${attendanceRatio}%` : '—'}
-          </p>
+        <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
+          <span className="text-xs text-slate-400 block mb-1">حالة القيد والتحقق</span>
+          <p className="text-lg font-bold text-teal-300 mt-1">طالب مسجل ومنتظم</p>
+          <span className="text-[11px] text-slate-500 mt-1 block">مدرج في كشف شعبة Special Chemistry</span>
         </div>
       </div>
 
-      {/* Student Attendance Logs */}
-      <div className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-white text-base flex items-center gap-2">
-            <Clock className="w-4 h-4 text-blue-400" />
-            <span>سجل الحضور الأكاديمي الخاص بي</span>
-          </h3>
-          <span className="text-xs text-slate-400 font-mono">
-            {records.length} جلسة
-          </span>
-        </div>
+      {/* Personal Attendance Record Table */}
+      <div className="rounded-2xl bg-[#0F1626] border border-white/[0.08] p-6 space-y-4">
+        <h3 className="text-sm font-bold text-white">سجل المحاضرات والجلسات السابقة</h3>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/50 overflow-hidden">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-800/80 text-slate-400 border-b border-slate-800">
-              <tr>
-                <th className="p-3.5">#</th>
-                <th className="p-3.5">المادة</th>
-                <th className="p-3.5">التاريخ</th>
-                <th className="p-3.5">وقت التسجيل</th>
-                <th className="p-3.5">التحقق الجغرافي</th>
-                <th className="p-3.5">الحالة</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {records.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-12 text-slate-500 text-xs">
-                    لم تسجل حضوراً في أي محاضرة حتى الآن. استخدم زر "تسجيل الحضور" عند بدء المحاضرة.
-                  </td>
-                </tr>
-              ) : (
-                records.map((r, i) => (
-                  <tr key={r.attendanceId} className="hover:bg-slate-800/40">
-                    <td className="p-3.5 text-slate-500 font-mono">{i + 1}</td>
-                    <td className="p-3.5 font-bold text-slate-200">{r.courseId}</td>
-                    <td className="p-3.5 text-slate-300">{r.date}</td>
-                    <td className="p-3.5 font-mono text-slate-400">{r.checkInTime}</td>
-                    <td className="p-3.5">
-                      {r.locationVerified ? (
-                        <span className="flex items-center gap-1 text-[11px] text-teal-400">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>معتمد بالقاعة</span>
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-slate-500">رمز فقط</span>
-                      )}
-                    </td>
-                    <td className="p-3.5">
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                        {r.status === 'PRESENT' ? 'حاضر ✅' : r.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {records.length === 0 ? (
+          <div className="text-center py-12 text-slate-500 text-xs">
+            لم تسجل حضوراً في أي محاضرة حتى الآن. انتظر فتح الجلسة من قبل عضو هيئة التدريس وسجل حضورك فوراً.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {records.map((r, i) => (
+              <div
+                key={r.attendanceId || i}
+                className="p-3.5 rounded-xl bg-[#090D16] border border-white/[0.04] flex items-center justify-between text-xs"
+              >
+                <div>
+                  <span className="font-semibold text-slate-100 block">{r.courseId || 'Special Chemistry 203'}</span>
+                  <div className="flex items-center gap-2 text-slate-500 mt-0.5 font-mono">
+                    <span>{r.date}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>وقت التسجيل: {r.checkInTime}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1 text-teal-400 font-semibold">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>حاضر</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Check-In Modal */}
+      {/* Check In Modal */}
       <StudentCheckInModal
         isOpen={isCheckInModalOpen}
         onClose={() => setIsCheckInModalOpen(false)}
+        onSuccess={fetchStudentData}
         prefilledSessionId={selectedSessionId}
-        onSuccess={() => {
-          fetchStudentData();
-        }}
       />
     </div>
   );

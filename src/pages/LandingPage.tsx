@@ -1,5 +1,8 @@
 import React from 'react';
-import { FlaskConical, GraduationCap, Shield, Users, CheckCircle, QrCode, MapPin, Database, Sparkles } from 'lucide-react';
+import {
+  FlaskConical, GraduationCap, Shield, Users,
+  QrCode, MapPin, FileSpreadsheet, ArrowLeft, Check, Compass
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface LandingPageProps {
@@ -10,116 +13,148 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const { role } = useAuth();
 
   return (
-    <div className="space-y-16 py-8">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-slate-800/80 via-slate-900/60 to-slate-950 p-8 sm:p-14 border border-slate-800 shadow-2xl">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
-
-        <div className="max-w-3xl mx-auto text-center relative z-10 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-semibold">
-            <FlaskConical className="w-4 h-4" />
-            <span>نظام الحضور والغياب لشعبة Special Chemistry</span>
+    <div className="space-y-16 py-6 max-w-6xl mx-auto">
+      {/* Editorial Header / Hero */}
+      <section className="border-b border-white/[0.08] pb-12 pt-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-400 mb-3 tracking-wide">
+              <span>كلية العلوم</span>
+              <span aria-hidden="true">·</span>
+              <span>شعبة الكيمياء الخاصة</span>
+              <span aria-hidden="true">·</span>
+              <span>العام الأكاديمي 2026/2027</span>
+            </div>
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
+              نظام إدارة الحضور والغياب الأكاديمي
+            </h1>
           </div>
-
-          <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight tracking-tight">
-            نظام الحضور والغياب الجامعي <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
-              شعبة الكيمياء الخاصة
-            </span>
-          </h1>
-
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto font-normal">
-            نظام متكامل لإدارة حضور وغياب المحاضرات والمعامل بتقنية رمز الاستجابة السريع (QR Code) مع التحقق من الموقع الجغرافي داخل القاعة، مبني بالكامل على معايير الإنتاج وخطة Firebase Spark المجانية بدون أي تكاليف أو خدمات مدفوعة.
+          <p className="text-slate-400 text-sm max-w-md leading-relaxed">
+            منظومة رقمية مخصصة لشعبة Special Chemistry لضبط حضور المحاضرات والمعامل بتقنية التحقق الجغرافي المزدوج ورموز الاستجابة المتغيرة.
           </p>
+        </div>
 
-          {/* Role Access Buttons */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
+        {/* 3 Dedicated Access Gates */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-4">
+          {/* Gate 1: Student */}
+          <div className="group rounded-2xl bg-[#0F1626] border border-white/[0.08] hover:border-teal-500/40 p-6 flex flex-col justify-between transition-all duration-200">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center mb-5">
+                <Users className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-white mb-2">بوابة الطلاب</h2>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                تسجيل الحضور الفوري في المحاضرة النشطة باستخدام الاسم المسجل ورقم المجموعة، مع التحقق من التواجد الفعلي داخل القاعة.
+              </p>
+            </div>
             <button
               onClick={() => onNavigate('/student/login')}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-xl shadow-blue-600/20 hover:scale-102 transition-all"
+              className="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold flex items-center justify-between transition-colors"
             >
-              <Users className="w-4 h-4" />
-              <span>دخول الطالب (بالاسم والمجموعة)</span>
+              <span>تسجيل حضور محاضرة</span>
+              <ArrowLeft className="w-4 h-4" />
             </button>
+          </div>
 
+          {/* Gate 2: Faculty / Doctor */}
+          <div className="group rounded-2xl bg-[#0F1626] border border-white/[0.08] hover:border-teal-500/40 p-6 flex flex-col justify-between transition-all duration-200">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400 flex items-center justify-center mb-5">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-white mb-2">هيئة التدريس والمحاضرين</h2>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                بدء جلسة الحضور الذكية، عرض رمز QR الديناميكي على شاشة العرض بالمدرج، ومتابعة كشف الحاضرين لحظياً.
+              </p>
+            </div>
             <button
               onClick={() => onNavigate('/doctor/login')}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-xl shadow-teal-600/20 hover:scale-102 transition-all"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center justify-between border border-white/[0.08] transition-colors"
             >
-              <GraduationCap className="w-4 h-4" />
-              <span>بوابة الدكاترة والمحاضرين</span>
+              <span>دخول المحاضر</span>
+              <ArrowLeft className="w-4 h-4" />
             </button>
+          </div>
 
+          {/* Gate 3: Admin */}
+          <div className="group rounded-2xl bg-[#0F1626] border border-white/[0.08] hover:border-teal-500/40 p-6 flex flex-col justify-between transition-all duration-200">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-5">
+                <Shield className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-white mb-2">إدارة الشعبة والمشرف</h2>
+              <p className="text-xs text-slate-400 leading-relaxed mb-6">
+                إشراف المشرف الأكاديمي: إدارة كشوف الطلاب، استيراد ملفات Excel، اعتماد حسابات الدكاترة، وتصدير التقارير الرسمية.
+              </p>
+            </div>
             <button
               onClick={() => onNavigate('/admin/login')}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/20 hover:scale-102 transition-all"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center justify-between border border-white/[0.08] transition-colors"
             >
-              <Shield className="w-4 h-4" />
-              <span>لوحة الإدارة الأكاديمية</span>
+              <span>لوحة الإشراف الأكاديمي</span>
+              <ArrowLeft className="w-4 h-4" />
             </button>
           </div>
         </div>
       </section>
 
-      {/* Feature Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
-            <QrCode className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-white mb-2">QR ديناميكي لمنع التحايل</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            يتم تحديث رمز الحضور المشفر دورياً كل 25 ثانية على شاشة الدكتور لمنع تصوير الشاشة وإرسالها للزملاء خارج القاعة.
-          </p>
+      {/* Domain Mechanisms (Structured Grid, no pill sandwiches) */}
+      <section className="space-y-6">
+        <div>
+          <span className="text-xs text-teal-400 font-medium">الآليات التقنية والأمان الأكاديمي</span>
+          <h2 className="text-2xl font-bold text-white mt-1">معايير دقة وضبط الحضور</h2>
         </div>
 
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center mb-4">
-            <MapPin className="w-6 h-6" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 rounded-2xl bg-[#0D1322] border border-white/[0.06]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                <QrCode className="w-4 h-4" />
+              </div>
+              <h3 className="font-semibold text-white text-sm">رمز QR مشفر وديناميكي</h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              توليد رمز استجابة سريعة يتجدد تلقائياً كل 30 ثانية في جلسة المحاضرة النشطة، لمنع تداول الصور أو التسجيل بالنيابة عن الغائبين.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-white mb-2">التحقق الجغرافي GPS</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            حساب المسافة بين إحداثيات الطالب وموقع قاعة المحاضرة أو المعمل بدقة؛ لا يتم تسجيل الحضور إلا داخل النطاق المسموح.
-          </p>
-        </div>
 
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors">
-          <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mb-4">
-            <Database className="w-6 h-6" />
+          <div className="p-6 rounded-2xl bg-[#0D1322] border border-white/[0.06]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                <Compass className="w-4 h-4" />
+              </div>
+              <h3 className="font-semibold text-white text-sm">التحقق الجغرافي من القاعة</h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              مطابقة إحداثيات GPS لجهاز الطالب بنطاق مدرج الكيمياء المحدد (نصف قطر 80 متراً) لضمان التواجد الفعلي قبل اعتماد الحضور.
+            </p>
           </div>
-          <h3 className="text-base font-bold text-white mb-2">Spark Plan متوافق 100%</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            مبني للعمل على باقة Firebase Spark المجانية بدون أي خوادم مدفوعة أو Cloud Run، مع حفظ حقيقي في Cloud Firestore.
-          </p>
+
+          <div className="p-6 rounded-2xl bg-[#0D1322] border border-white/[0.06]">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-400 flex items-center justify-center">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+              <h3 className="font-semibold text-white text-sm">تكامل كامل مع Excel و CSV</h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              استيراد قوائم الدفعة مباشرة من كشوف شؤون الطلاب، وتصدير تقارير ونسب الحضور التفصيلية بصيغة .xlsx المعتمدة بنقرة واحدة.
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Guidelines and Details */}
-      <section className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800">
-        <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-emerald-400" />
-          <span>إرشادات حضور شعبة Special Chemistry</span>
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-300">
-          <div className="flex items-start gap-2.5">
-            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <span>الطالب لا يحتاج لإنشاء حساب؛ تسجيل الدخول يتم بالاسم الرباعي ورقم المجموعة المعتمدين.</span>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <span>جلسات الحضور تفتح لمدة محددة من بداية المحاضرة، ويتم غلقها تلقائياً.</span>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <span>يمنع منعاً باتاً تكرار تسجيل الحضور لنفس الطالب في الجلسة الواحدة بواسطة القفل الذري.</span>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <span>تقارير الحضور والغياب وكشوفات الإكسيل تصدر مباشرة من لوحة التحكم بضغطة زر.</span>
-          </div>
+      {/* University Department Footer Note */}
+      <footer className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div>
+          <span>Special Chemistry Attendance System · قسم الكيمياء الخاصة</span>
         </div>
-      </section>
+        <div className="flex items-center gap-4 text-slate-400">
+          <span>المشرف المسؤول: محمد سمير عبدالعاطي</span>
+          <span aria-hidden="true">·</span>
+          <span>نسخة النظام 2.0 المستقرة</span>
+        </div>
+      </footer>
     </div>
   );
 };

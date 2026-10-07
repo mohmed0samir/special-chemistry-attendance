@@ -295,8 +295,20 @@ export const AdminDashboard: React.FC<{ onNavigate: (path: string) => void }> = 
     return matchSearch && matchGroup;
   });
 
-  // Calculate unique groups from students
-  const availableGroups = Array.from(new Set(students.map((s) => s.groupNumber))).sort();
+  // Calculate unique groups from both registered students and groups
+  const availableGroups = Array.from(
+    new Set([
+      ...groups.map((g) => (g.groupNumber || '').trim().replace(/^مجموعة\s*/, '')),
+      ...students.map((s) => (s.groupNumber || '').trim().replace(/^مجموعة\s*/, '')),
+    ])
+  )
+    .filter(Boolean)
+    .sort((a, b) => {
+      const na = parseInt(a, 10);
+      const nb = parseInt(b, 10);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return a.localeCompare(b);
+    });
 
   return (
     <div className="space-y-6 pb-16">
@@ -319,42 +331,42 @@ export const AdminDashboard: React.FC<{ onNavigate: (path: string) => void }> = 
       )}
 
       {/* Top Header Card */}
-      <div className="rounded-3xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-[#0F1626] border border-white/[0.08] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-            <span className="text-xs font-bold text-emerald-400 tracking-wider">
+          <div className="flex items-center gap-2 text-xs text-teal-400 mb-1">
+            <span className="w-2 h-2 rounded-full bg-teal-400" />
+            <span className="font-semibold tracking-wider">
               لوحة الإدارة الأكاديمية
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white">
-            شعبة Special Chemistry | الكيمياء الخاصة
+          <h1 className="text-xl sm:text-2xl font-bold text-white">
+            شعبة Special Chemistry · الكيمياء الخاصة
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            المشرف الأكاديمي: {adminProfile?.name || 'محمد سمير عبد الغاطي'} • متصل بقاعدة بيانات Cloud Firestore
+            المشرف الأكاديمي: {adminProfile?.name || 'محمد سمير عبدالعاطي'} · نظام الخادم المباشر المستقل
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-white/[0.08] transition-colors"
           >
-            <KeyRound className="w-4 h-4 text-emerald-400" />
+            <KeyRound className="w-3.5 h-3.5 text-teal-400" />
             <span>تغيير كلمة المرور</span>
           </button>
           <button
             onClick={() => fetchData()}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/[0.08] transition-colors"
             title="تحديث البيانات"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Navigation Tabs Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800 scrollbar-none">
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-white/[0.08] scrollbar-none">
         {[
           { id: 'overview', label: 'نظرة عامة', icon: BarChart3 },
           { id: 'students', label: 'الطلاب', count: students.length, icon: Users },
@@ -372,21 +384,17 @@ export const AdminDashboard: React.FC<{ onNavigate: (path: string) => void }> = 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as ActiveTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
                 isActive
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
-                  : 'bg-slate-900/60 text-slate-400 hover:text-white hover:bg-slate-800'
+                  ? 'bg-white/10 text-white font-semibold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
               {tab.count !== undefined && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'
-                  }`}
-                >
-                  {tab.count}
+                <span className="text-[11px] font-mono tabular-nums opacity-70">
+                  ({tab.count})
                 </span>
               )}
             </button>
@@ -399,44 +407,44 @@ export const AdminDashboard: React.FC<{ onNavigate: (path: string) => void }> = 
         <div className="space-y-6">
           {/* Key Metric Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-medium">عدد الطلاب</span>
-                <Users className="w-5 h-5 text-blue-400" />
+                <span className="text-xs font-medium">إجمالي الطلاب</span>
+                <Users className="w-4 h-4 text-teal-400" />
               </div>
-              <p className="text-2xl sm:text-3xl font-black text-white">{students.length}</p>
-              <span className="text-[11px] text-slate-400 mt-1 block">
+              <p className="text-2xl font-bold font-mono tabular-nums text-white">{students.length}</p>
+              <span className="text-[11px] text-slate-500 mt-1 block font-mono tabular-nums">
                 {students.filter(s => s.status === 'active').length} طالب نشط
               </span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-medium">عدد الدكاترة</span>
-                <GraduationCap className="w-5 h-5 text-teal-400" />
+                <span className="text-xs font-medium">أعضاء هيئة التدريس</span>
+                <GraduationCap className="w-4 h-4 text-sky-400" />
               </div>
-              <p className="text-2xl sm:text-3xl font-black text-white">{doctors.length}</p>
-              <span className="text-[11px] text-slate-400 mt-1 block">أعضاء هيئة التدريس</span>
+              <p className="text-2xl font-bold font-mono tabular-nums text-white">{doctors.length}</p>
+              <span className="text-[11px] text-slate-500 mt-1 block">محاضرين معتمدين</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-medium">المواد الأكاديمية</span>
-                <BookOpen className="w-5 h-5 text-amber-400" />
+                <span className="text-xs font-medium">المقررات الأكاديمية</span>
+                <BookOpen className="w-4 h-4 text-amber-400" />
               </div>
-              <p className="text-2xl sm:text-3xl font-black text-white">{courses.length}</p>
-              <span className="text-[11px] text-slate-400 mt-1 block">مقررات شعبة الكيمياء</span>
+              <p className="text-2xl font-bold font-mono tabular-nums text-white">{courses.length}</p>
+              <span className="text-[11px] text-slate-500 mt-1 block">مقررات شعبة الكيمياء</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div className="p-5 rounded-2xl bg-[#0F1626] border border-white/[0.08]">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-medium">جلسات الحضور المفتوحة</span>
-                <Clock className="w-5 h-5 text-emerald-400" />
+                <span className="text-xs font-medium">الجلسات المفتوحة</span>
+                <Clock className="w-4 h-4 text-teal-400" />
               </div>
-              <p className="text-2xl sm:text-3xl font-black text-emerald-400">
+              <p className="text-2xl font-bold font-mono tabular-nums text-teal-400">
                 {sessions.filter(s => s.status === 'OPEN').length}
               </p>
-              <span className="text-[11px] text-slate-400 mt-1 block">جلسات نشطة الآن</span>
+              <span className="text-[11px] text-slate-500 mt-1 block">جلسات نشطة الآن</span>
             </div>
           </div>
 
@@ -1047,7 +1055,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (path: string) => void }> = 
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
                 <div>
                   <span className="font-bold text-slate-200 block">اسم المشرف المعتمد</span>
-                  <span className="text-slate-400">{adminProfile?.name || 'محمد سمير عبد الغاطي'}</span>
+                  <span className="text-slate-400">{adminProfile?.name || 'محمد سمير عبدالعاطي'}</span>
                 </div>
                 <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
                   ADMIN
@@ -1057,7 +1065,7 @@ export const AdminDashboard: React.FC<{ onNavigate: (path: string) => void }> = 
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/60 border border-slate-700/60">
                 <div>
                   <span className="font-bold text-slate-200 block">كلمة المرور</span>
-                  <span className="text-slate-400">مشفرة ومحمية عبر Firebase Authentication</span>
+                  <span className="text-slate-400">مشفرة ومحمية على الخادم المحلي</span>
                 </div>
                 <button
                   onClick={() => setIsPasswordModalOpen(true)}

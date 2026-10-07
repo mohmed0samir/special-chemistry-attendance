@@ -1,6 +1,6 @@
 {
   "name": "Chem Attendance 203 - Special Chemistry",
-  "description": "نظام الحضور والغياب لشعبة Special Chemistry - إدارة الدكاترة والطلاب وجلسات الحضور بتقنية QR والموقع الجغرافي",
-  "requestFramePermissions": ["geolocation"],
+  "description": "نظام الحضور والغياب لشعبة Special Chemistry - إدارة الدكاترة والطلاب وجلسات الحضور بتقنية QR الذكية",
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
