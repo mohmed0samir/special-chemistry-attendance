@@ -1,0 +1,51 @@
+{
+  "admins": [
+    {
+      "id": "admin_primary",
+      "name": "محمد سمير عبدالعاطي",
+      "password": "Chemist 2030",
+      "role": "admin",
+      "createdAt": "2026-10-06T23:16:56.718Z"
+    }
+  ],
+  "doctors": [],
+  "students": [],
+  "courses": [
+    {
+      "id": "c_203",
+      "name": "Special Chemistry 203",
+      "code": "203",
+      "doctorName": "هيئة التدريس",
+      "groupNumbers": "1, 2, 3",
+      "createdAt": "2026-10-06T23:16:59.728Z"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g_1",
+      "groupNumber": "1",
+      "name": "مجموعة 1"
+    },
+    {
+      "id": "g_2",
+      "groupNumber": "2",
+      "name": "مجموعة 2"
+    },
+    {
+      "id": "g_3",
+      "groupNumber": "3",
+      "name": "مجموعة 3"
+    }
+  ],
+  "schedules": [],
+  "attendanceSessions": [],
+  "attendanceRecords": [],
+  "settings": {
+    "collegeName": "كلية العلوم - شعبة كيمياء خاصة Special Chemistry",
+    "academicYear": "2026/2027",
+    "sessionDurationMinutes": 15,
+    "defaultRadius": 80,
+    "defaultLatitude": 30.0444,
+    "defaultLongitude": 31.2357
+  }
+}

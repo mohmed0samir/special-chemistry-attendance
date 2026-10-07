@@ -1,11 +1,105 @@
-<div align="center">
+# نظام الحضور والغياب لشعبة Special Chemistry
+### Special Chemistry Attendance System
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+نظام جامعي حقيقي ومتكامل لإدارة الحضور والغياب لشعبة الكيمياء الخاصة (Special Chemistry)، مصمم بالكامل ليعمل على باقة **Firebase المجانية (Spark Plan)** دون الحاجة إلى خوادم مدفوعة أو Cloud Run.
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🌟 مميزات النظام
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+- **إدارة صلاحيات مبنية على الأدوار (RBAC)**:
+  - المشرف الأكاديمي (`ADMIN`)
+  - عضو هيئة التدريس / المحاضر (`DOCTOR`)
+  - الطالب (`STUDENT`)
+- **حساب المشرف الأولي الآمن**:
+  - الاسم: `محمد سمير عبد الغاطي`
+  - كلمة المرور الأولية: `Chemist 2030`
+  - إمكانية تغيير كلمة المرور فور الدخول عبر Firebase Auth، دون تخزين كلمات المرور في Firestore.
+- **توليد كلمات مرور قوية للدكاترة**:
+  - صيغة كلمة المرور: `CHEM + CourseCode + RandomPart` (مثال: `CHEM203-K7P4`).
+  - عرض كلمة المرور لمرة واحدة للمشرف مع زر النسخ السريع، مع إمكانية Reset Password لاحقاً.
+- **استيراد كشوف الطلاب بملفات Excel (`.xlsx`)**:
+  - معالجة وفحص ملفات الإكسيل مباشرة بالواجهة الأمامية.
+  - إظهار معاينة وإحصائيات شاملة (الإجمالي، الصحيح، التكرارات، الأخطاء، التوزيع على المجموعات) قبل الحفظ في Firestore بنظام الـ Batch.
+- **تسجيل دخول الطلاب الآمن**:
+  - دخول بالاسم ورقم المجموعة فقط دون تسجيل حساب.
+  - حماية تامة لقائمة الطلاب ضد الاستخراج الجماعي أو التنزيل (No blanket collection read).
+- **جلسات حضور ذكية وتقنية QR Code**:
+  - توليد رمز QR ديناميكي يتجدد مشفراً كل 25 ثانية لمنع تصوير الشاشة وإرسالها للزملاء في المنازل.
+  - قفل ذري (Atomic Document Key: `sessionId_studentId`) يمنع تكرار تسجيل حضور الطالب في الجلسة ذاتها.
+- **التحقق من النطاق الجغرافي (GPS Geolocation)**:
+  - التحقق من تواجد الطالب داخل نطاق قاعة المحاضرة أو المعمل باستخدام معادلة Haversine.
+- **تصدير التقارير والكشوفات**:
+  - تصدير كشوف الحضور والغياب بصيغتي Excel و CSV مجاناً عبر المتصفح.
 
-</div>
+---
+
+## 🛠️ دليل التثبيت والتشغيل والإدارة (Firebase Guide)
+
+### 1. إنشاء مشروع Firebase
+1. توجه إلى [Firebase Console](https://console.firebase.google.com/).
+2. اضغط على **Add Project** وقم بتسمية المشروع (مثال: `special-chemistry-attendance`).
+3. عطل Google Analytics إذا لم تكن بحاجة إليها، ثم اضغط **Create Project**.
+
+### 2. تفعيل Authentication
+1. في القائمة الجانبية، اختر **Build → Authentication**.
+2. اضغط على **Get Started**.
+3. في تبويب **Sign-in method**، قم بتفعيل:
+   - **Email/Password** (مطلوب لدخول المشرف والدكاترة).
+   - **Anonymous** (مطلوب لجلسات الطلاب المشفرة).
+
+### 3. إنشاء Cloud Firestore
+1. في القائمة الجانبية، اختر **Build → Firestore Database**.
+2. اضغط على **Create Database**.
+3. اختر موقع قاعدة البيانات الأقرب لجمهورك (مثال: `europe-west3` أو `me-central1`).
+4. اختر **Start in production mode**.
+
+### 4. إعداد قواعد الأمان (Security Rules)
+يحتوي المشروع على ملف `firestore.rules` جاهز ومحكم، والذي تم نشره تلقائياً. يمكنك مراجعته في Firebase Console تحت:
+`Firestore Database → Rules`
+
+### 5. تشغيل المشروع محلياً
+```bash
+# تثبيت الاعتماديات
+npm install
+
+# تشغيل خادم التطوير
+npm run dev
+```
+سيعمل التطبيق على الرابط: `http://localhost:3000`.
+
+### 6. تسجيل المشرف الأول
+1. افتح صفحة `/admin/login` من المتصفح.
+2. أدخل:
+   - الاسم: `محمد سمير عبد الغاطي`
+   - كلمة المرور: `Chemist 2030`
+3. سيقوم النظام بتهيئة وتفعيل حساب الـ Admin في Firebase Auth وإنشاء مستند المشرف في كولكشن `admins`.
+4. يمكنك فوراً الذهاب إلى **الإعدادات والأمان → تغيير كلمة المرور** لتحديثها إلى كلمة مرورك الشخصية.
+
+### 7. النشر إلى Firebase Hosting
+الملفات `firebase.json` و `.firebaserc` جاهزة داخل المشروع. للنشر:
+```bash
+# بناء المشروع
+npm run build
+
+# النشر عبر Firebase CLI
+firebase deploy --only hosting
+```
+
+### 8. إدارة البيانات من Firebase Console
+يمكنك الدخول إلى [Firebase Console](https://console.firebase.google.com/) في أي وقت لمشاهدة:
+- **Authentication**: حسابات المشرف والدكاترة المفعلة.
+- **Firestore Database**:
+  - `admins`: مستندات المشرفين.
+  - `doctors`: بيانات الدكاترة والمقررات.
+  - `students`: كشوف الطلاب المرفوعة والمجموعات.
+  - `attendanceSessions`: جلسات الحضور وحالتها (`OPEN` / `CLOSED`).
+  - `attendanceRecords`: سجلات حضور الطلاب وتوقيتات الحضور والموقع الجغرافي.
+  - `courses`, `groups`, `schedules`, `settings`.
+
+---
+
+## 🔒 بنية الأمان والحماية
+- **عدم تخزين كلمات المرور في Firestore**: كلمات المرور تُدار حصراً عبر Firebase Authentication.
+- **حماية الطلاب من التسريب**: لا يمكن لأي طالب أو زائر سحب قاعدة بيانات الدفعة، حيث تفرض قواعد الأمان قيوداً صارمة على الاستعلامات الفردية فقط.
+- **القفل الذري للحضور**: لا يمكن لطالب أن يسجل مرتين في نفس الجلسة بسبب استخدام معرف مركب وحيد `sessionId_studentId`.
